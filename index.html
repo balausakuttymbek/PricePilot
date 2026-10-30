@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PricePilot – MVP prototype</title>
+<style>
+:root{--navy:#12305c;--or:#ff9f1a;--ink:#1d2433;--mute:#5a6b86;--line:#dde3ee;--bg:#f4f6fa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}
+:focus-visible{outline:3px solid #3b9be8;outline-offset:2px}
+header{background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 28px}
+.brand{font-size:22px;font-weight:700}.brand small{font-size:14px;font-weight:400;margin-left:4px}
+nav{display:flex;gap:22px;flex-wrap:wrap}
+nav button{background:none;border:0;color:#c5d0e4;padding:6px 0;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-color:var(--or)}
+main{padding:28px;max-width:1100px}
+h1{font-size:26px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.card h3{margin:0 0 8px;font-size:18px}
+label{display:block;font-size:14px;color:var(--mute);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #c5cee0;border-radius:8px;background:#fff;color:var(--ink)}
+select{background:#eee}
+textarea{font-family:monospace;min-height:56px}
+.btn{border:0;border-radius:8px;padding:12px 18px;color:#fff;background:var(--navy);cursor:pointer;margin-top:8px}
+.btn.or{background:var(--or);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.ok{background:#1f9d55;border-radius:8px;padding:10px 20px;color:#fff;border:0;cursor:pointer}
+.ghost{background:#fff;color:var(--ink);border:1px solid #c5cee0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.small{font-size:13px;color:var(--mute)}
+.list p{margin:0;padding:8px 0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:var(--mute);padding:10px 8px}
+td{padding:10px 8px;border-top:1px solid var(--line);vertical-align:middle}
+tr.done td{background:#eaf7ee}
+.pill{font-size:13px;font-weight:700;padding:3px 12px;border-radius:99px}
+.raise{background:#d9f2e3;color:#1b7a45}.lower{background:#fde1e1;color:#b42525}.hold{background:#fdebc8;color:#8a5a00}
+.rs{font-size:14px;color:var(--mute)}
+.tg{background:#e8f0fb;border-left:4px solid #3b9be8;border-radius:6px;padding:12px 14px;margin-top:12px}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kp .card{text-align:center;margin:0 0 16px}.kp b{display:block;font-size:34px}
+.stars button{background:none;border:0;font-size:28px;color:#c5cae0;cursor:pointer;padding:0 4px}
+.stars button.on{color:var(--or)}
+.scroll{overflow-x:auto}
+@media(max-width:760px){.grid,.kp{grid-template-columns:1fr}header{padding:14px}main{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="brand">PricePilot<small>MVP prototype - Recommend mode</small></div><nav id="nav"></nav></header>
+<main id="v"></main>
+<script>
+const TABS=["1. Connect","2. Rules","3. Recommendations","4. Report & feedback"];
+const S={t:0,margin:12,dec:{},rating:0,sent:false,connected:false,rules:false};
+const R=[
+ {id:0,n:"Redmi Buds 5",now:9200,sug:9900,cost:7400,a:"Raise",c:"raise",r:"2 rivals out of stock; you hold 40 units"},
+ {id:1,n:"Car vacuum Baseus",now:11500,sug:11200,cost:9000,a:"Lower",c:"lower",r:"Rival -300; margin still 15 %, sales slow"},
+ {id:2,n:"Air fryer 4L",now:24900,sug:24900,cost:22000,a:"Hold",c:"hold",r:"Price war: 3 undercuts today; going below floor loses profit"}];
+const f=n=>n.toLocaleString("en-US");
+const floor=c=>Math.round(c/(1-S.margin/100)/100)*100;
+function nav(){document.getElementById("nav").innerHTML=TABS.map((x,i)=>`<button data-t="${i}" class="${i==S.t?'on':''}">${x}</button>`).join("")}
+function v0(){return `<h1>Start your free 14-day pilot</h1><p class="sub">For Kaspi.kz sellers with 500-5,000 SKUs. No seller password required.</p>
+<div class="grid"><div class="card"><label for="a">Shop name</label><input id="a" value="TechHome KZ">
+<label for="b">Contact (Telegram)</label><input id="b" value="@techhome_kz">
+<label for="c">How to connect Kaspi.kz</label><select id="c"><option>Upload current XML price list (official channel)</option><option>Upload later (use sample data)</option></select>
+<label for="d">Pilot SKUs</label><input id="d" value="25 SKUs selected (CSV: SKU, cost price, stock)">
+<button class="btn or" data-t="1">Connect and continue</button></div>
+<div class="card list"><h3>What you get</h3><p>Profit-based price recommendations every hour</p><p>Alerts when rivals run out of stock</p><p>Price floor that can never be broken</p><p>A reason for every change, sent to Telegram</p><span class="small">Default mode: Recommend. You approve every change.</span></div></div>`}
+function v1(){const fl=floor(7400);return `<h1>Set your safety rules</h1><p class="sub">PricePilot will never recommend a price outside these limits.</p>
+<div class="grid"><div class="card"><label for="m">Minimum margin (price floor), %</label><input id="m" type="number" min="1" max="60" value="${S.margin}">
+<label for="w">Maximum discount per week</label><select id="w"><option>3 % (Kaspi discount badge rule)</option><option>5 %</option><option>10 %</option></select>
+<label for="ch">Alert channel</label><select id="ch"><option>Telegram - one-click approve</option><option>Web dashboard only</option></select></div>
+<div class="card"><h3>Example: Xiaomi Redmi Buds 5</h3><table><tr><td>Cost price</td><td>7,400 KZT</td></tr><tr><td>Floor (${S.margin} % margin)</td><td><b>${f(fl)} KZT</b></td></tr><tr><td>Current price</td><td>9,200 KZT</td></tr></table>
+<p class="small">Bots following the leader would go to the floor. PricePilot first checks if first place pays off.</p></div></div>
+<button class="btn" data-t="2">Save rules and see recommendations</button>`}
+function v2(){const n=Object.keys(S.dec).length;
+const rows=R.map(x=>{const d=S.dec[x.id],p=Math.max(x.sug,x.c=="hold"?x.now:floor(x.cost));
+const act=d?`<b>${d=="y"?(x.c=="hold"?"Hold confirmed":"Approved"):"Rejected"}</b> <button class="ghost" data-u="${x.id}">Undo</button>`:
+(x.c=="hold"?`<button class="ok" data-d="${x.id}:y">OK</button>`:`<button class="ok" data-d="${x.id}:y">Approve</button> <button class="ghost" data-d="${x.id}:n">Reject</button>`);
+return `<tr class="${d=="y"?'done':''}"><td>${x.n}</td><td>${f(x.now)}</td><td><b>${f(p)}</b></td><td><span class="pill ${x.c}">${x.a}</span></td><td class="rs">${x.r}</td><td>${act}</td></tr>`}).join("");
+return `<h1>Today's recommendations</h1><p class="sub">${3-n} change${3-n==1?'':'s'} waiting for your approval. Nothing is changed without you.</p>
+<div class="card scroll"><table><tr><th>Product</th><th>Now</th><th>Suggested</th><th>Action</th><th>Reason</th><th></th></tr>${rows}</table>
+<div class="tg"><b>Telegram preview:</b> Redmi Buds 5: raise 9,200 to 9,900 KZT. Reason: 2 rivals out of stock. Reply 1 to approve, 2 to reject.</div></div>
+${n?`<p class="small">Decision saved. Approved changes are added to your Kaspi XML price list for the next hourly update.</p>`:''}
+<button class="btn" data-t="3" ${n==3?'':'disabled'}>View weekly report</button>`}
+function v3(){const n=Object.keys(S.dec).length;return `<h1>Weekly profit report</h1><p class="sub">Pilot group (25 SKUs), week 1. Sample data for the demo.</p>
+<div class="kp"><div class="card"><b>${n} of 3</b>recommendations reviewed</div><div class="card"><b>+6.8 %</b>gross profit per SKU vs. last week</div><div class="card"><b>1</b>price war avoided</div></div>
+<div class="card"><h3>${S.sent?'Thank you for your feedback':'Was this week useful?'}</h3>${S.sent?'<p>Saved. The team will contact you for a 15-minute call.</p>':`
+<div class="stars">${[1,2,3,4,5].map(i=>`<button class="${i<=S.rating?'on':''}" data-s="${i}" aria-label="${i} of 5">★</button>`).join("")}</div>
+<label for="cm">What was missing or confusing?</label><textarea id="cm" placeholder="Short comment for the PricePilot team"></textarea>
+<button class="btn or" data-send ${S.rating?'':'disabled'}>Send feedback</button>`}</div>`}
+function render(){nav();document.getElementById("v").innerHTML=[v0,v1,v2,v3][S.t]();window.scrollTo(0,0)}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
+ if(d.t!==undefined){S.t=+d.t;render()}
+ else if(d.d){const[i,v]=d.d.split(":");S.dec[i]=v;render()}
+ else if(d.u){delete S.dec[d.u];render()}
+ else if(d.s){S.rating=+d.s;const c=document.getElementById("cm").value;render();document.getElementById("cm").value=c}
+ else if(d.send!==undefined){try{const k=JSON.parse(localStorage.getItem("pp_feedback")||"[]");k.push({rating:S.rating,comment:document.getElementById("cm").value,decisions:S.dec,at:new Date().toISOString()});localStorage.setItem("pp_feedback",JSON.stringify(k))}catch(_){}S.sent=true;render()}});
+document.addEventListener("change",e=>{if(e.target.id=="m"){S.margin=Math.min(60,Math.max(1,+e.target.value||12));render()}});
+render();
+</script>
+</body>
+</html>
