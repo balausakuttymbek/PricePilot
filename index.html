@@ -34,6 +34,7 @@ textarea{font-family:monospace;min-height:56px}
 .ghost{background:#fff;color:var(--ink);border:1px solid #c5cee0;border-radius:8px;padding:8px 14px;cursor:pointer}
 .small{font-size:13px;color:var(--mute)}
 .demo{display:inline-block;background:#fdebc8;color:#8a5a00;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle}
+.opt{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:16px;margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.opt input{width:auto;margin-top:4px}.opt.sel{border-color:var(--navy);background:#f4f8ff}.opt small{display:block;color:var(--mute);font-size:13px}
 .list p{margin:0;padding:8px 0}
 .flow{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
 .flow li{display:flex;gap:10px;align-items:center;padding:8px 0}
@@ -73,20 +74,21 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const floor=c=>Math.ceil(c/(1-S.margin/100)/10-1e-9)*10;
 const ACT=(p,now)=>p>now?["Raise","raise"]:p<now?["Lower","lower"]:["Hold","hold"];
 function nav(){document.getElementById("nav").innerHTML=TABS.map((x,i)=>`<button data-t="${i}" class="${i==S.t?'on':''}">${x}</button>`).join("")}
-function v0(){const up=S.mode=="upload";return `<h1>Start your free 14-day pilot</h1><p class="sub">For Kaspi.kz sellers with 500-5,000 SKUs. No seller password required.</p>
-<div class="grid"><div class="card"><label for="a">Shop name</label><input id="a" value="${esc(S.shop)}">
-<label for="b">Contact (Telegram)</label><input id="b" value="${esc(S.tg)}">
-<label for="c">How to connect Kaspi.kz</label><select id="c"><option value="upload" ${up?'selected':''}>Upload current XML price list (official channel)</option><option value="sample" ${up?'':'selected'}>Use sample data (demo)</option></select>
-<label for="xf">Kaspi XML price list (.xml)</label><input id="xf" type="file" accept=".xml,text/xml,application/xml" ${up?'':'disabled'}>
-${up&&S.xml?`<span class="small">Selected: ${esc(S.xml)}</span>`:''}
-<label for="cf">Pilot SKUs (.csv)</label><input id="cf" type="file" accept=".csv,text/csv" ${up?'':'disabled'}>
-<span class="small">CSV columns: SKU, cost price, stock. Pilot group: 25 SKUs.${up&&S.csv?` Selected: ${esc(S.csv)}`:''}</span>
-${up?'':'<p class="small"><span class="demo" style="margin-left:0">Demo data</span> 25 sample SKUs are loaded for the demonstration.</p>'}
+function v0(){const up=S.mode=="upload";return `<h1>Start your 14-day free trial</h1><p class="sub">For Kaspi.kz sellers. No password required.</p>
+<div class="grid"><div class="card"><h3>Connect your shop</h3>
+<label for="a">Shop name</label><input id="a" value="${esc(S.shop)}">
+<label for="b">Telegram contact</label><input id="b" value="${esc(S.tg)}">
+<label>Choose data source</label>
+<label class="opt ${up?'sel':''}"><input type="radio" name="ds" value="upload" ${up?'checked':''}><span>Upload your files<small>Kaspi XML price list + CSV (cost and stock)</small></span></label>
+${up?`<label for="xf">Kaspi XML price list</label><input id="xf" type="file" accept=".xml,text/xml,application/xml">${S.xml?`<span class="small">Selected: ${esc(S.xml)}</span>`:''}
+<label for="cf">CSV: SKU, cost price, stock</label><input id="cf" type="file" accept=".csv,text/csv">${S.csv?`<span class="small">Selected: ${esc(S.csv)}</span>`:''}`:''}
+<label class="opt ${up?'':'sel'}"><input type="radio" name="ds" value="sample" ${up?'':'checked'}><span>Use sample data <span class="demo">Demo data</span><small>Explore the prototype with 25 demo products.</small></span></label>
+<p class="small"><b>Pilot size: 25 SKUs</b></p>
 <button class="btn or" data-t="1">Continue</button></div>
-<div class="card list"><h3>What you get</h3><p>Profit-based price recommendations every hour</p><p>Alerts when rivals run out of stock</p><p>Price floor that can never be broken</p><p>A reason for every change, sent to Telegram</p>
+<div class="card list"><h3>What you get</h3><p>Profit-based price recommendations</p><p>Alerts when rivals run out of stock</p><p>A price floor that can never be broken</p>
 <ol class="flow"><li><span>1</span>Connect data</li><li><span>2</span>Set rules</li><li><span>3</span>Review prices</li><li><span>4</span>Track profit</li></ol>
-<span class="small">Default mode: Recommend. You approve every change. PricePilot does not log in to your Kaspi account or change prices by itself: approved prices go into your XML price list, which you upload to Kaspi.</span>
-<p class="small">Free trial: 14 days. Beta test of the MVP: 4-6 weeks.</p></div></div>`}
+<span class="small"><b>Default mode: Recommend.</b> You stay in control. Approved prices are added to your XML file for the next upload to Kaspi.</span>
+<p class="small">Free trial: 14 days<br>MVP beta testing: 4-6 weeks</p></div></div>`}
 function v1(){const fl=floor(7400);return `<h1>Set your safety rules</h1><p class="sub">PricePilot will never recommend a price outside these limits.</p>
 <div class="grid"><div class="card"><label for="m">Minimum profit margin (%)</label><input id="m" type="number" min="1" max="60" value="${S.margin}">
 <span class="small">The recommended price can never fall below your minimum profit margin. Margin is counted from the selling price.</span>
@@ -126,7 +128,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
 document.addEventListener("input",e=>{const i=e.target.id;if(i=="a")S.shop=e.target.value;else if(i=="b")S.tg=e.target.value;else if(i=="cm")S.cm=e.target.value});
 document.addEventListener("change",e=>{const i=e.target.id;
  if(i=="m"){S.margin=Math.min(60,Math.max(1,+e.target.value||12));render()}
- else if(i=="c"){S.mode=e.target.value;render()}
+ else if(e.target.name=="ds"){S.mode=e.target.value;render()}
  else if(i=="xf"){S.xml=e.target.files[0]?e.target.files[0].name:"";render()}
  else if(i=="cf"){S.csv=e.target.files[0]?e.target.files[0].name:"";render()}});
 render();
